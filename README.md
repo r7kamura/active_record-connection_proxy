@@ -1,5 +1,7 @@
 # ActiveRecord::ConnectionProxy
 
+[![Gem Version](https://badge.fury.io/rb/active_record-connection_proxy.svg)](https://rubygems.org/gems/active_record-connection_proxy)
+
 Provides proxy-based connection switching logic for ActiveRecord.
 
 ## Installation
