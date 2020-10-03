@@ -1,8 +1,6 @@
 # ActiveRecord::ConnectionProxy
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/active_record/connection_proxy`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Provides proxy-based connection switching logic for ActiveRecord.
 
 ## Installation
 
@@ -22,7 +20,57 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+To avoid overcomplication, this library only provides `ActiveRecord::ConnectionProxy` class that borrows ActiveRecord connection from another model.
+So you'll need to assemble some parts yourself.
+
+For example, if you do replication on production environment, the first step is to setup database configuration:
+
+```yaml
+# config/database.yml
+development:
+  url: ...
+
+test:
+  url: ...
+
+produciton:
+  url: ...
+
+production_replica: # <- This one!
+  url: ...
+```
+
+then create an empty abstract model class to borrow connection:
+
+```ruby
+# app/models/replica.rb
+class Replica < ActiveRecord::Base
+  self.abstract_class = true
+
+  if ::Rails.env.production?
+    establish_connection(:production_replica)
+  end
+end
+```
+
+then add some handy method like this:
+
+```ruby
+class ApplicationRecord < ActiveRecord::Base
+  def with_replica
+    ::ActiveRecord::ConnectionProxy.new(
+      connection: ::Replica.connection,
+      klass: self,
+    )
+  end
+end
+```
+
+After that, you can read records from `production_replica` connection on production env like this:
+
+```ruby
+User.with_replica.where(status: :active).order(created_at: :desc).first
+```
 
 ## Development
 
